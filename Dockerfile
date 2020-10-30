@@ -12,4 +12,4 @@ RUN pip install -r requirements.txt
 
 COPY ./src /examples
 ENTRYPOINT [ "streamlit", "run"]
-CMD ["/examples/intro.py"]
+CMD ["/examples/covid_forecast_web.py"]
