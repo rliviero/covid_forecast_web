@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+.idea/.gitignore
+.idea/covid_forecast_web.iml
+.idea/dbnavigator.xml
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+credentials.toml
+dock_build_and_push.sh
+src/covid.world.csv
