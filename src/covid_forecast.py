@@ -38,3 +38,5 @@ def calc_forecast(df_sample, df_forecast, func):
     #func_y = func(np.arange(df_forecast.index.size), func_params[0], func_params[1])
     func_y = func(np.arange(df_forecast.index.size), *func_params)
     return pd.DataFrame(func_y, columns=['forecast'], index=df_forecast.index)
+
+
