@@ -109,6 +109,4 @@ venv.bak/
 .idea/misc.xml
 .idea/modules.xml
 .idea/vcs.xml
-credentials.toml
-dock_build_and_push.sh
 src/covid.world.csv
