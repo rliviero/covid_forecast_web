@@ -7,6 +7,7 @@ COPY requirements.txt .
 COPY config.toml .
 COPY credentials.toml .
 COPY src/covid_data.py .
+COPY src/covid_cleansing.py .
 COPY src/covid_forecast.py .
 COPY src/covid_forecast_web.py .
 
