@@ -43,7 +43,7 @@ forecast_days = st.sidebar.slider(label="Forecast days:", value=7, min_value=0, 
 roll_avg_window = st.sidebar.slider(label="Rolling average window:", value=7, min_value=2, max_value=14)
 
 functions = {"Exponential": exp_func, "Linear": lin_func, "Logistic": logi_func}
-function = st.sidebar.radio("Forecast function:", ["Exponential", "Linear", "Logistic"])
+function = st.sidebar.radio("Forecast function:", ["Exponential", "Linear"]) # , "Logistic"
 
 # Display
 
