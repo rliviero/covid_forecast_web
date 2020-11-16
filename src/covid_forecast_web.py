@@ -11,7 +11,8 @@ covid_world = get_covid_world_data()
 covid_world['cases_14d'] = covid_world['cases_14_days_per10K'] * (covid_world['popData2019'] / 100000)
 
 all_countries_ordered = covid_world.country.unique().tolist()
-primary_countries = ['Switzerland', 'Germany', 'Italy', 'France', 'Austria', 'Spain', 'Sweden', 'United_Kingdom', 'United_States_of_America']
+primary_countries = ['Switzerland', 'Germany', 'Italy', 'France', 'Austria', 'Spain', 'Sweden', 'United_Kingdom',
+                     'United_States_of_America']
 all_countries = list(dict.fromkeys(primary_countries + all_countries_ordered))
 
 # General page layout
@@ -47,7 +48,12 @@ roll_avg_window = st.sidebar.slider(label="Rolling average window:", value=7, mi
 per_10K = st.sidebar.checkbox("Per 100'000 inhabitants", True)
 
 functions = {"Exponential": exp_func, "Linear": lin_func, "Logistic": logi_func, "Gaussian": gauss_func}
-function = st.sidebar.radio("Forecast function:", ["Exponential", "Linear", "Logistic", "Gaussian"])
+
+st.sidebar.write("Forecast functions:")
+selected_functions = []
+for function in functions:
+    if st.sidebar.checkbox(function, True):
+        selected_functions.append(function)
 
 # Display
 
@@ -63,16 +69,20 @@ for index, country in enumerate(countries):
         covid_sample_ind = covid_sample.loc[start_date:end_date, indicators[indicator]]
 
         if per_10K:
-            covid_sample_ind = covid_sample_ind.apply(lambda x : x / (popData2019 / 100000))
+            covid_sample_ind = covid_sample_ind.apply(lambda x: x / (popData2019 / 100000))
             add_title = " per 100'000 inhabitants"
 
         covid_forecast = covid_sample_ind.reindex(
             pd.date_range(start=start_date, end=end_date + timedelta(days=forecast_days), freq='D'))
 
-        df_forecast = calc_forecast(covid_sample_ind, covid_forecast, functions[function])
-        df = covid_sample_ind.to_frame()
-        df = pd.merge(df_forecast, df, how='outer', left_index=True, right_index=True)
-        df['roll. avg'] = df[indicators[indicator]].rolling(window=roll_avg_window).mean()
+        df = covid_forecast.to_frame()
+        df['Roll. avg'] = df[indicators[indicator]].rolling(window=roll_avg_window).mean()
+
+        for function in selected_functions:
+            df_forecast_func = calc_forecast(covid_sample_ind, covid_forecast, functions[function])
+            df[function] = df_forecast_func
+
+        df.rename(columns={indicators[indicator]: indicators[indicator].capitalize()}, inplace = True)
 
         with columns[index]:
             st.write("**{}{}**".format(indicator, add_title))
