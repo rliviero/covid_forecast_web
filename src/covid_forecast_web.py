@@ -3,13 +3,15 @@ import streamlit as st
 from datetime import date, datetime, timedelta
 from covid_data import get_covid_world_data
 from covid_cleansing import get_last_non_zero
-from covid_forecast import calc_forecast, exp_func, lin_func, logi_func
+from covid_forecast import calc_forecast, exp_func, lin_func, logi_func, gauss_func
 
 # Get and prepare data
 
 covid_world = get_covid_world_data()
+covid_world['cases_14d'] = covid_world['cases_14_days_per10K'] * (covid_world['popData2019'] / 100000)
+
 all_countries_ordered = covid_world.country.unique().tolist()
-primary_countries = ['Switzerland', 'Germany', 'Italy', 'France', 'Austria', 'Spain', 'Sweden']
+primary_countries = ['Switzerland', 'Germany', 'Italy', 'France', 'Austria', 'Spain', 'Sweden', 'United_Kingdom', 'United_States_of_America']
 all_countries = list(dict.fromkeys(primary_countries + all_countries_ordered))
 
 # General page layout
@@ -42,18 +44,28 @@ end_date = st.sidebar.date_input(label="End date:", value=covid_countries.index.
 forecast_days = st.sidebar.slider(label="Forecast days:", value=7, min_value=0, max_value=21)
 roll_avg_window = st.sidebar.slider(label="Rolling average window:", value=7, min_value=2, max_value=14)
 
-functions = {"Exponential": exp_func, "Linear": lin_func, "Logistic": logi_func}
-function = st.sidebar.radio("Forecast function:", ["Exponential", "Linear"]) # , "Logistic"
+per_10K = st.sidebar.checkbox("Per 100'000 inhabitants", True)
+
+functions = {"Exponential": exp_func, "Linear": lin_func, "Logistic": logi_func, "Gaussian": gauss_func}
+function = st.sidebar.radio("Forecast function:", ["Exponential", "Linear", "Logistic", "Gaussian"])
 
 # Display
 
-indicators = {"Cases for 14 days per 100'000": 'cases_14_days_per10K', "Cases": 'cases', "Deaths": 'deaths', }
+indicators = {"Cases": 'cases', "Cumulative Cases for 14 days": 'cases_14d', "Deaths": 'deaths'}
+
+add_title = ""
 
 for index, country in enumerate(countries):
-    covid_sample = covid_countries.loc[covid_countries['country'] == country]  # .iloc[::-1]
+    covid_sample = covid_countries.loc[covid_countries['country'] == country]
+    popData2019 = covid_sample['popData2019'].iloc[0]
+
     for indicator in indicators:
-        # covid_sample_ind = covid_sample.loc[end_date:start_date, indicators[indicator]]
         covid_sample_ind = covid_sample.loc[start_date:end_date, indicators[indicator]]
+
+        if per_10K:
+            covid_sample_ind = covid_sample_ind.apply(lambda x : x / (popData2019 / 100000))
+            add_title = " per 100'000 inhabitants"
+
         covid_forecast = covid_sample_ind.reindex(
             pd.date_range(start=start_date, end=end_date + timedelta(days=forecast_days), freq='D'))
 
@@ -63,5 +75,5 @@ for index, country in enumerate(countries):
         df['roll. avg'] = df[indicators[indicator]].rolling(window=roll_avg_window).mean()
 
         with columns[index]:
-            st.write("**{}**".format(indicator))
+            st.write("**{}{}**".format(indicator, add_title))
             st.line_chart(df)

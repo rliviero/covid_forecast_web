@@ -11,32 +11,29 @@ def exp_func(x, a, b):
     return a * np.exp(b * x)
 
 
-#def logi_func(x, l, c, k):
-#    return l / (1 + c * np.exp(-k * x))
+def logi_func(x, L, x0, k):
+    return L / (1 + np.exp(-1 * k * (x - x0)))
 
 
-def logi_func(x, b0, k, s):
-    return s * 1 / (1 + np.exp(-1 * k * s * x) * (s / b0 - 1))
+def gauss_func(x, a, x0, sigma):
+    return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
 
 
-#params = curve_fit(lgt_func, x, covid_sample, p0=[2, 2.5e-4, 200],
-#                   maxfev=10000)  # bounds=([0, 1e-5, covid_sample[-1]], [covid_sample[-1], 0.9, 100000])
-
-
-
-initials = {lin_func: (0, 5.0), exp_func: (3, 0.001), logi_func: (2, 2.5e-4, 200)}
-# bounds for a,b: (a min, b min), a max, b max)
-bounds = {lin_func: ((0, -np.inf), (np.inf, np.inf)), exp_func: ((0, -np.inf), (np.inf, np.inf)),
-          logi_func: ((0, -np.inf, -np.inf), (np.inf, np.inf, np.inf))}
+initials = {lin_func: (0, 5.0), exp_func: (3, 0.001), logi_func: (2, 2.5e-4, 200), gauss_func: (100, 60, 10)}
 
 
 def calc_forecast(df_sample, df_forecast, func):
-    params = curve_fit(func, np.arange(df_sample.index.size), df_sample, p0=initials[func], bounds=bounds[func], maxfev=10000)
-    func_params = params[0]
-    print(func)
-    print(func_params)
-    #func_y = func(np.arange(df_forecast.index.size), func_params[0], func_params[1])
-    func_y = func(np.arange(df_forecast.index.size), *func_params)
+    x = np.arange(df_sample.index.size)
+    y = df_sample
+
+    if func == gauss_func:
+        mean = sum(x * y) / sum(y)
+        sigma = np.sqrt(sum(y * (x - mean) ** 2) / sum(y))
+        initials[gauss_func] = [max(y), mean, sigma]
+
+    if func == logi_func:
+        initials[logi_func] = [max(y), max(x) / 2, 0.1]
+
+    popt, pcov = curve_fit(func, x, y, p0=initials[func])
+    func_y = func(np.arange(df_forecast.index.size), *popt)
     return pd.DataFrame(func_y, columns=['forecast'], index=df_forecast.index)
-
-
