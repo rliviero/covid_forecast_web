@@ -23,15 +23,20 @@ st.write(
     "Calculate your own forecast of the **COVID-19** development. Solution provided by Roberto Liviero, data by [ECDC](https://opendata.ecdc.europa.eu).")
 columns = st.beta_columns(2)
 
-# Sidebar
-
-st.sidebar.header('User Input Parameters')
 countries = ['Switzerland', 'Germany']
 countries[0] = columns[0].selectbox("1. Country:", all_countries, index=0)
 countries[1] = columns[1].selectbox("2. Country:", all_countries, index=1)
 
+if countries[0] == countries[1]:
+    st.warning('Please choose two different countries.')
+    st.stop()
+
 covid_countries = pd.concat([covid_world.loc[covid_world['country'] == country].iloc[::-1].loc[:get_last_non_zero(
     covid_world.loc[covid_world['country'] == country].iloc[::-1]['cases']), ] for country in countries])
+
+# Sidebar
+
+st.sidebar.header('User Input Parameters')
 
 # todo: find correct min and max start and end date
 
@@ -80,7 +85,8 @@ for index, country in enumerate(countries):
 
         for function in selected_functions:
             df_forecast_func = calc_forecast(covid_sample_ind, covid_forecast, functions[function])
-            df[function] = df_forecast_func
+            if not df_forecast_func.isnull().values.any():
+                df[function] = df_forecast_func
 
         df.rename(columns={indicators[indicator]: indicators[indicator].capitalize()}, inplace = True)
 
