@@ -37,9 +37,16 @@ def calc_forecast(df_sample, df_forecast, func):
     try:
         popt, pcov = curve_fit(func, x, y, p0=initials[func], maxfev=20000)
         func_y = func(np.arange(df_forecast.index.size), *popt)
+        residual = np.linalg.norm(y-func(x, *popt))
 
     except RuntimeError:
         func_y = np.empty(df_forecast.index.size)
         func_y = func_y.fill(np.NaN)
+        residual = np.inf
 
-    return pd.DataFrame(func_y, columns=['forecast'], index=df_forecast.index)
+    return pd.DataFrame(func_y, columns=['forecast'], index=df_forecast.index), residual
+
+
+
+
+

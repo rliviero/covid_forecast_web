@@ -47,18 +47,23 @@ start_date = st.sidebar.date_input(label="Start date:", value=datetime.today() -
 end_date = st.sidebar.date_input(label="End date:", value=covid_countries.index.max().to_pydatetime(),
                                  min_value=start_date, max_value=covid_countries.index.max().to_pydatetime())
 
-forecast_days = st.sidebar.slider(label="Forecast days:", value=7, min_value=0, max_value=21)
+forecast_days = st.sidebar.slider(label="Forecast days:", value=14, min_value=0, max_value=21)
 roll_avg_window = st.sidebar.slider(label="Rolling average window:", value=7, min_value=2, max_value=14)
 
 per_10K = st.sidebar.checkbox("Per 100'000 inhabitants", True)
 
 functions = {"Exponential": exp_func, "Linear": lin_func, "Logistic": logi_func, "Gaussian": gauss_func}
 
-st.sidebar.write("Forecast functions:")
-selected_functions = []
-for function in functions:
-    if st.sidebar.checkbox(function, True):
-        selected_functions.append(function)
+auto_func_calc = st.sidebar.checkbox("Automatic forecast", True)
+
+if auto_func_calc:
+    selected_functions = functions.keys()
+else:
+    selected_functions = []
+    st.sidebar.write("Forecast functions:")
+    for function in functions:
+        if st.sidebar.checkbox(function, True):
+            selected_functions.append(function)
 
 # Display
 
@@ -83,13 +88,30 @@ for index, country in enumerate(countries):
         df = covid_forecast.to_frame()
         df['Roll. avg'] = df[indicators[indicator]].rolling(window=roll_avg_window).mean()
 
+        residuals = {}
         for function in selected_functions:
-            df_forecast_func = calc_forecast(covid_sample_ind, covid_forecast, functions[function])
+            func = functions[function]
+            df_forecast_func, residuals[func] = calc_forecast(covid_sample_ind, covid_forecast, func)
             if not df_forecast_func.isnull().values.any():
                 df[function] = df_forecast_func
 
-        df.rename(columns={indicators[indicator]: indicators[indicator].capitalize()}, inplace = True)
+        # best_fit_func_name = ""
+        if auto_func_calc and residuals:
+            best_fit_func = min(residuals, key=residuals.get)
+            for function in selected_functions:
+                if functions[function] == best_fit_func:
+                    df.rename(columns={function: 'Forecast'}, inplace=True)
+                    # best_fit_func_name = function
+                else:
+                    if function in df:
+                        del df[function]
+
+        df.rename(columns={indicators[indicator]: indicators[indicator].capitalize()}, inplace=True)
 
         with columns[index]:
             st.write("**{}{}**".format(indicator, add_title))
             st.line_chart(df)
+            # if residuals and best_fit_func_name:
+            #     with st.beta_expander(""):
+            #         st.write(f"Choosen function: {best_fit_func_name}")
+                #st.write(min(residuals, key=residuals.get))
