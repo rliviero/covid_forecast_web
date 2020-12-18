@@ -5,6 +5,10 @@ from covid_data import get_covid_world_data
 from covid_cleansing import get_last_non_zero
 from covid_forecast import calc_forecast, exp_func, lin_func, logi_func, gauss_func
 
+# Constants
+
+DAYS_BACK = 60
+
 # Get and prepare data
 
 covid_world = get_covid_world_data()
@@ -20,7 +24,7 @@ all_countries = list(dict.fromkeys(primary_countries + all_countries_ordered))
 st.set_page_config(page_title="COVID-19 Forcast", layout="wide")
 st.write("# COVID-19 Forecast")
 st.write(
-    "Calculate your own forecast of the **COVID-19** development. Solution provided by Roberto Liviero, data by [ECDC](https://opendata.ecdc.europa.eu).")
+    "Calculate your own forecast of the **COVID-19** development. Solution provided by Roberto Liviero, data by [Our World in Data](https://ourworldindata.org/coronavirus-data).")
 columns = st.beta_columns(2)
 
 countries = ['Switzerland', 'Germany']
@@ -31,8 +35,8 @@ if countries[0] == countries[1]:
     st.warning('Please choose two different countries.')
     st.stop()
 
-covid_countries = pd.concat([covid_world.loc[covid_world['country'] == country].iloc[::-1].loc[:get_last_non_zero(
-    covid_world.loc[covid_world['country'] == country].iloc[::-1]['cases']), ] for country in countries])
+covid_countries = pd.concat([covid_world.loc[covid_world['country'] == country].loc[:get_last_non_zero(
+    covid_world.loc[covid_world['country'] == country]['cases']), ] for country in countries])
 
 # Sidebar
 
@@ -40,11 +44,11 @@ st.sidebar.header('User Input Parameters')
 
 # todo: find correct min and max start and end date
 
-start_date = st.sidebar.date_input(label="Start date:", value=datetime.today() - timedelta(days=60),
+start_date = st.sidebar.date_input(label="Start date:", value=(datetime.today() - timedelta(days=DAYS_BACK)).date(),
                                    min_value=covid_countries.index.min().to_pydatetime(),
                                    max_value=covid_countries.index.max().to_pydatetime())
 
-end_date = st.sidebar.date_input(label="End date:", value=covid_countries.index.max().to_pydatetime(),
+end_date = st.sidebar.date_input(label="End date:", value=(covid_countries.index.max().to_pydatetime()).date(),
                                  min_value=start_date, max_value=covid_countries.index.max().to_pydatetime())
 
 forecast_days = st.sidebar.slider(label="Forecast days:", value=14, min_value=0, max_value=21)
@@ -95,13 +99,11 @@ for index, country in enumerate(countries):
             if not df_forecast_func.isnull().values.any():
                 df[function] = df_forecast_func
 
-        # best_fit_func_name = ""
         if auto_func_calc and residuals:
             best_fit_func = min(residuals, key=residuals.get)
             for function in selected_functions:
                 if functions[function] == best_fit_func:
                     df.rename(columns={function: 'Forecast'}, inplace=True)
-                    # best_fit_func_name = function
                 else:
                     if function in df:
                         del df[function]
@@ -111,7 +113,3 @@ for index, country in enumerate(countries):
         with columns[index]:
             st.write("**{}{}**".format(indicator, add_title))
             st.line_chart(df)
-            # if residuals and best_fit_func_name:
-            #     with st.beta_expander(""):
-            #         st.write(f"Choosen function: {best_fit_func_name}")
-                #st.write(min(residuals, key=residuals.get))

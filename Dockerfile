@@ -1,4 +1,4 @@
-FROM python:3.7.2-slim
+FROM python:3.8-slim
 
 EXPOSE 80
 
@@ -18,5 +18,6 @@ RUN mkdir ~/.streamlit
 RUN cp config.toml ~/.streamlit/config.toml
 RUN cp credentials.toml ~/.streamlit/credentials.toml
 
+ENV GIT_PYTHON_REFRESH=quiet
 ENTRYPOINT ["streamlit", "run"]
 CMD ["covid_forecast_web.py"]
