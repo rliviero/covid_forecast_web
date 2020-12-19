@@ -15,8 +15,8 @@ covid_world = get_covid_world_data()
 covid_world['cases_14d'] = covid_world['cases_14_days_per10K'] * (covid_world['popData2019'] / 100000)
 
 all_countries_ordered = covid_world.country.unique().tolist()
-primary_countries = ['Switzerland', 'Germany', 'Italy', 'France', 'Austria', 'Spain', 'Sweden', 'United_Kingdom',
-                     'United_States_of_America']
+primary_countries = ['Switzerland', 'Germany', 'Italy', 'France', 'Austria', 'Spain', 'Sweden', 'United Kingdom',
+                     'United States']
 all_countries = list(dict.fromkeys(primary_countries + all_countries_ordered))
 
 # General page layout
@@ -52,7 +52,6 @@ end_date = st.sidebar.date_input(label="End date:", value=(covid_countries.index
                                  min_value=start_date, max_value=covid_countries.index.max().to_pydatetime())
 
 forecast_days = st.sidebar.slider(label="Forecast days:", value=14, min_value=0, max_value=21)
-roll_avg_window = st.sidebar.slider(label="Rolling average window:", value=7, min_value=2, max_value=14)
 
 per_10K = st.sidebar.checkbox("Per 100'000 inhabitants", True)
 
@@ -90,7 +89,6 @@ for index, country in enumerate(countries):
             pd.date_range(start=start_date, end=end_date + timedelta(days=forecast_days), freq='D'))
 
         df = covid_forecast.to_frame()
-        df['Roll. avg'] = df[indicators[indicator]].rolling(window=roll_avg_window).mean()
 
         residuals = {}
         for function in selected_functions:
