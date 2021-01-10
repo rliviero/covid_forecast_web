@@ -10,7 +10,7 @@ from covid_forecast import calc_forecast, exp_func, lin_func, logi_func, gauss_f
 DAYS_BACK = 60
 
 # Get data through file to deliver fast response
-covid_world = get_covid_world_data(force_file_use=True)
+covid_world, source_date = get_covid_world_data()
 
 
 covid_world['cases_14d'] = covid_world['cases_14_days_per10K'] * (covid_world['popData2019'] / 100000)
@@ -25,7 +25,7 @@ all_countries = list(dict.fromkeys(primary_countries + all_countries_ordered))
 st.set_page_config(page_title="COVID-19 Forcast", layout="wide")
 st.write("# COVID-19 Forecast")
 st.write(
-    "Calculate your own forecast of the **COVID-19** development. Solution provided by Roberto Liviero, data by [Our World in Data](https://ourworldindata.org/coronavirus-data).")
+    f"Calculate your own forecast of the **COVID-19** development. Solution provided by Roberto Liviero, data by [Our World in Data](https://ourworldindata.org/coronavirus-data) as of {source_date}.")
 columns = st.beta_columns(2)
 
 countries = ['Switzerland', 'Germany']

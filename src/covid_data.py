@@ -1,5 +1,4 @@
-from urllib.request import urlopen
-from urllib.request import Request
+from urllib.request import urlopen, Request
 from dateutil.parser import parse as parsedate
 import datetime as dt
 import os
@@ -16,11 +15,12 @@ url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
 def get_covid_source(force_use=None):
 
     if force_use == 'file' and os.path.isfile(file_path):
-        return open(file_path, "r")
+        return open(file_path, "r"), 'file', dt.datetime.fromtimestamp(os.path.getmtime(file_path)).astimezone()
 
     if force_use == 'http':
         request = Request(url)
-        return urlopen(request), 'http'
+        response = urlopen(request)
+        return response, 'http', parsedate(response.headers['Date']).astimezone()
 
     # return http source if newer, else return file
 
@@ -28,10 +28,10 @@ def get_covid_source(force_use=None):
     response = urlopen(request)
     url_datetime = parsedate(response.headers['Date']).astimezone()
 
-    if os.path.isfile(file_path) and dt.datetime.fromtimestamp(os.path.getmtime(file_path)).astimezone() > url_datetime:
-        source = open(file_path, "r"), 'file'
+    if os.path.isfile(file_path) and dt.datetime.fromtimestamp(os.path.getmtime(file_path)).astimezone() >= url_datetime:
+        source = open(file_path, "r"), 'file', dt.datetime.fromtimestamp(os.path.getmtime(file_path)).astimezone()
     else:
-        source = response, 'http'
+        source = response, 'http', url_datetime
 
     return source
 
@@ -39,12 +39,14 @@ def get_covid_source(force_use=None):
 def get_covid_world_data(force_use=None):
     # read and check source
 
-    source, source_type = get_covid_source(force_use)
+    source, source_type, source_date = get_covid_source(force_use)
 
     covid_world = pd.read_csv(source, parse_dates=['date'])
 
     if source_type == 'http':
         covid_world.to_csv(file_path)
+        # we set modification date/time to source date/time to preserve this information
+        os.utime(file_path, (source_date.timestamp(), source_date.timestamp()))
 
     # columns: iso_code,continent,location,date,total_cases,new_cases,new_cases_smoothed,total_deaths,new_deaths,new_deaths_smoothed,total_cases_per_million,new_cases_per_million,new_cases_smoothed_per_million,total_deaths_per_million,new_deaths_per_million,new_deaths_smoothed_per_million,reproduction_rate,icu_patients,icu_patients_per_million,hosp_patients,hosp_patients_per_million,weekly_icu_admissions,weekly_icu_admissions_per_million,weekly_hosp_admissions,weekly_hosp_admissions_per_million,new_tests,total_tests,total_tests_per_thousand,new_tests_per_thousand,new_tests_smoothed,new_tests_smoothed_per_thousand,positive_rate,tests_per_case,tests_units,total_vaccinations,total_vaccinations_per_hundred,stringency_index,population,population_density,median_age,aged_65_older,aged_70_older,gdp_per_capita,extreme_poverty,cardiovasc_death_rate,diabetes_prevalence,female_smokers,male_smokers,handwashing_facilities,hospital_beds_per_thousand,life_expectancy,human_development_index
 
@@ -57,7 +59,7 @@ def get_covid_world_data(force_use=None):
 
     covid_world.set_index('date', inplace=True)
 
-    return covid_world[['country', 'cases', 'deaths', 'popData2019', 'cases_14_days_per10K']]
+    return covid_world[['country', 'cases', 'deaths', 'popData2019', 'cases_14_days_per10K']], source_date
 
 
 # Test
@@ -69,13 +71,13 @@ if __name__ == "__main__":
     # make sure it get the newest data trough a request
     os.utime(file_path, (dt.datetime.now().timestamp(), dt.datetime(2019, 1, 1, 12, 0, 0).timestamp()))
     start = timer()
-    df = get_covid_world_data()
-    print(f"loaded data in {timer() - start} seconds")
+    df, date = get_covid_world_data()
+    print(f"loaded data as of {date} in {timer() - start} seconds")
 
     # get from file
     start = timer()
-    df = get_covid_world_data()
-    print(f"loaded data in {timer() - start} seconds")
+    df, date = get_covid_world_data()
+    print(f"loaded data as of {date} in {timer() - start} seconds")
 
     print(df.index.dtype)
     df_ch = df.loc[df['country'] == "Switzerland"]
