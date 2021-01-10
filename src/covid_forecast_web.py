@@ -124,5 +124,7 @@ if new_source_date > source_date:
     start = timer()
     write_covid_file(covid_world_orig, new_source_date)
     print(f"written data as of {source_date} in {round(timer() - start,2)} seconds")
+    # provoke a refresh by setting a value used by st
+    forecast_days = forecast_days
 
 #st.experimental_rerun()

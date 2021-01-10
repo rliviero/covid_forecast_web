@@ -36,14 +36,19 @@ def write_covid_file(df, source_date):
 def get_covid_source(force_use=None):
 
     if force_use == 'file':
-        return get_covid_file_handle()
+        file, file_datetime = get_covid_file_handle()
+        if file:
+            return file, file_datetime
+        else:
+            return get_covid_http_handle()
+
     if force_use == 'http':
         return get_covid_http_handle()
 
     # return http source if newer, else return file
     response, url_datetime = get_covid_http_handle()
     file, file_datetime = get_covid_file_handle()
-    if file_datetime and file_datetime >= url_datetime:
+    if file and file_datetime >= url_datetime:
         return file, file_datetime
     else:
         return response, url_datetime
