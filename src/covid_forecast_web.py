@@ -1,17 +1,20 @@
 import pandas as pd
 import streamlit as st
 from datetime import date, datetime, timedelta
-from covid_data import get_covid_world_data
+from covid_data import get_covid_world_data, transform_covid_data, write_covid_file
 from covid_cleansing import get_last_non_zero
 from covid_forecast import calc_forecast, exp_func, lin_func, logi_func, gauss_func
+from timeit import default_timer as timer
 
 # Constants
 
 DAYS_BACK = 60
 
-# Get data through file to deliver fast response
-covid_world, source_date = get_covid_world_data()
+start = timer()
+covid_world_orig, source_date = get_covid_world_data(force_use='file')
+print(f"loaded data from file as of {source_date} in {round(timer() - start,2)} seconds")
 
+covid_world = transform_covid_data(covid_world_orig)
 
 covid_world['cases_14d'] = covid_world['cases_14_days_per10K'] * (covid_world['popData2019'] / 100000)
 
@@ -112,3 +115,14 @@ for index, country in enumerate(countries):
         with columns[index]:
             st.write("**{}{}**".format(indicator, add_title))
             st.line_chart(df)
+
+start = timer()
+covid_world_orig, new_source_date = get_covid_world_data(force_use='http')
+print(f"loaded data from http as of {source_date} in {round(timer() - start,2)} seconds")
+
+if new_source_date > source_date:
+    start = timer()
+    write_covid_file(covid_world_orig, new_source_date)
+    print(f"written data as of {source_date} in {round(timer() - start,2)} seconds")
+
+#st.experimental_rerun()
