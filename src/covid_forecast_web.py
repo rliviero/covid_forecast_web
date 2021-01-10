@@ -9,9 +9,10 @@ from covid_forecast import calc_forecast, exp_func, lin_func, logi_func, gauss_f
 
 DAYS_BACK = 60
 
-# Get and prepare data
+# Get data through file to deliver fast response
+covid_world = get_covid_world_data(force_file_use=True)
 
-covid_world = get_covid_world_data()
+
 covid_world['cases_14d'] = covid_world['cases_14_days_per10K'] * (covid_world['popData2019'] / 100000)
 
 all_countries_ordered = covid_world.country.unique().tolist()
