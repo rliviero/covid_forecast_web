@@ -10,6 +10,7 @@ COPY src/covid_data.py .
 COPY src/covid_cleansing.py .
 COPY src/covid_forecast.py .
 COPY src/covid_forecast_web.py .
+COPY src/owid-covid.world.csv .
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt

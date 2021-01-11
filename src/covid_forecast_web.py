@@ -118,12 +118,12 @@ for index, country in enumerate(countries):
 
 start = timer()
 covid_world_orig, new_source_date = get_covid_world_data(force_use='http')
-print(f"loaded data from http as of {source_date} in {round(timer() - start,2)} seconds")
+print(f"loaded data from http as of {new_source_date} in {round(timer() - start,2)} seconds")
 
 if new_source_date > source_date:
     start = timer()
     write_covid_file(covid_world_orig, new_source_date)
-    print(f"written data as of {source_date} in {round(timer() - start,2)} seconds")
+    print(f"written data as of {new_source_date} in {round(timer() - start,2)} seconds")
     # provoke a refresh by setting a value used by st
     forecast_days = forecast_days
 
