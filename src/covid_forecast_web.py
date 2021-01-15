@@ -10,6 +10,56 @@ from timeit import default_timer as timer
 
 DAYS_BACK = 60
 
+
+def show():
+
+    indicators = {"Cases": 'cases', "Cumulative Cases for 14 days": 'cases_14d', "Deaths": 'deaths'}
+
+    add_title = ""
+
+    for index, country in enumerate(countries):
+        covid_sample = covid_countries.loc[covid_countries['country'] == country].dropna()
+        popData2019 = covid_sample['popData2019'].iloc[0]
+
+        for indicator in indicators:
+            covid_sample_ind = covid_sample.loc[start_date:end_date, indicators[indicator]]
+
+            if per_10K:
+                covid_sample_ind = covid_sample_ind.apply(lambda x: x / (popData2019 / 100000))
+                add_title = " per 100'000 inhabitants"
+
+            covid_forecast = covid_sample_ind.reindex(
+                pd.date_range(start=start_date, end=end_date + timedelta(days=forecast_days), freq='D'))
+
+            df = covid_forecast.to_frame()
+
+            residuals = {}
+            for function in selected_functions:
+                func = functions[function]
+                df_forecast_func, residuals[func] = calc_forecast(covid_sample_ind, covid_forecast, func)
+                if not df_forecast_func.isnull().values.any():
+                    df[function] = df_forecast_func
+
+            if auto_func_calc and residuals:
+                best_fit_func = min(residuals, key=residuals.get)
+                for function in selected_functions:
+                    if functions[function] == best_fit_func:
+                        df.rename(columns={function: 'Forecast'}, inplace=True)
+                    else:
+                        if function in df:
+                            del df[function]
+
+            df.rename(columns={indicators[indicator]: indicators[indicator].capitalize()}, inplace=True)
+
+            with columns[index]:
+                st.write("**{}{}**".format(indicator, add_title))
+                st.line_chart(df)
+
+
+# Main
+
+st.set_page_config(page_title="COVID-19 Forcast", layout="wide")
+
 start = timer()
 covid_world_orig, source_date = get_covid_world_data(force_use='file')
 print(f"loaded data from file as of {source_date} in {round(timer() - start,2)} seconds")
@@ -25,7 +75,6 @@ all_countries = list(dict.fromkeys(primary_countries + all_countries_ordered))
 
 # General page layout
 
-st.set_page_config(page_title="COVID-19 Forcast", layout="wide")
 st.write("# COVID-19 Forecast")
 st.write(
     f"Calculate your own forecast of the **COVID-19** development. Solution provided by Roberto Liviero, data by [Our World in Data](https://ourworldindata.org/coronavirus-data) as of {source_date}.")
@@ -72,59 +121,17 @@ else:
         if st.sidebar.checkbox(function, True):
             selected_functions.append(function)
 
-# Display
 
-indicators = {"Cases": 'cases', "Cumulative Cases for 14 days": 'cases_14d', "Deaths": 'deaths'}
-
-add_title = ""
-
-for index, country in enumerate(countries):
-    covid_sample = covid_countries.loc[covid_countries['country'] == country]
-    popData2019 = covid_sample['popData2019'].iloc[0]
-
-    for indicator in indicators:
-        covid_sample_ind = covid_sample.loc[start_date:end_date, indicators[indicator]]
-
-        if per_10K:
-            covid_sample_ind = covid_sample_ind.apply(lambda x: x / (popData2019 / 100000))
-            add_title = " per 100'000 inhabitants"
-
-        covid_forecast = covid_sample_ind.reindex(
-            pd.date_range(start=start_date, end=end_date + timedelta(days=forecast_days), freq='D'))
-
-        df = covid_forecast.to_frame()
-
-        residuals = {}
-        for function in selected_functions:
-            func = functions[function]
-            df_forecast_func, residuals[func] = calc_forecast(covid_sample_ind, covid_forecast, func)
-            if not df_forecast_func.isnull().values.any():
-                df[function] = df_forecast_func
-
-        if auto_func_calc and residuals:
-            best_fit_func = min(residuals, key=residuals.get)
-            for function in selected_functions:
-                if functions[function] == best_fit_func:
-                    df.rename(columns={function: 'Forecast'}, inplace=True)
-                else:
-                    if function in df:
-                        del df[function]
-
-        df.rename(columns={indicators[indicator]: indicators[indicator].capitalize()}, inplace=True)
-
-        with columns[index]:
-            st.write("**{}{}**".format(indicator, add_title))
-            st.line_chart(df)
+show()
 
 start = timer()
 covid_world_orig, new_source_date = get_covid_world_data(force_use='http')
-print(f"loaded data from http as of {new_source_date} in {round(timer() - start,2)} seconds")
+print(f"loaded data from http as of {new_source_date} in {round(timer() - start, 2)} seconds")
 
 if new_source_date > source_date:
     start = timer()
     write_covid_file(covid_world_orig, new_source_date)
-    print(f"written data as of {new_source_date} in {round(timer() - start,2)} seconds")
-    # provoke a refresh by setting a value used by st
-    forecast_days = forecast_days
+    print(f"written data as of {new_source_date} in {round(timer() - start, 2)} seconds")
+    show()
 
-#st.experimental_rerun()
+
