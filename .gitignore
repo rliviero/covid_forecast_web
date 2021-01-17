@@ -109,5 +109,4 @@ venv.bak/
 .idea/misc.xml
 .idea/modules.xml
 .idea/vcs.xml
-/src/covid.world.csv
-/src/owid-covid.world.csv
+

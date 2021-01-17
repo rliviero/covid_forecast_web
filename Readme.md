@@ -1,46 +1,5 @@
-# Streamlit on Docker
-Project docs: https://streamlit.io/docs/
+# Covid-19 Forecast
 
-<p align="center">
-  <img src="img/streamlit.png" width="750" title="Example Streamlit App">
-</p>
+This program try's to calculate and visualize a forecast of the COVID-19 numbers with the help of streamlit (https://streamlit.io/docs/). 
 
-This Docker image is available on Docker Hub: 
-## Pull
-`docker pull tomerlevi/streamlit-docker`
-
-*Page: https://cloud.docker.com/u/tomerlevi/repository/docker/tomerlevi/streamlit-docker
-
-## Running Streamlit docker built-in examples
-You can learn how to use streamlit by exploring 3 scripts (packed inside the docker image):
-
-`docker run -it -p 8501:8501 tomerlevi/streamlit-docker /examples/intro.py` <br/>
-`docker run -it -p 8501:8501 tomerlevi/streamlit-docker /examples/plot_example.py` <br/>
-`docker run -it -p 8501:8501 tomerlevi/streamlit-docker /examples/uber_nyc_data_explorer.py` <br/>
-
-
-## Running your own streamlit script
-`docker run -it -p 8501:8501 -v <local-scripts-folder>:/app tomerlevi/streamlit <relative-path-to-a-script>`
-
-Example:
-`docker run -it -p 8501:8501 -v ~/workspace/streamlit-scripts:/app tomerlevi/streamlit src/main.py`
-
-Once streamlit is running, open your browser and navigate to: http://localhost:8501
-
-*NOTE*: you can open the script you passed (`<relative-path-to-a-script>`) in your favorite text editor and edit it, streamlit will pickup all changes once you refresh your browser tab.
-
-
-## Build 
-Clone the repo:
-`git clone git@github.com:MrTomerLevi/streamlit-docker.git`
-
-Change dir into the project:
-`cd streamlit-docker`
-
-*Optional:*  You can add your required PyPi packages to the `requirements.txt`
-
-Run docker build:
-`docker build -t tomerlevi/streamlit-docker .`
-
-
-
+How to deploy streamlit in a docker container was originally based on https://github.com/MrTomerLevi/streamlit-docker. Thanks a lot.
