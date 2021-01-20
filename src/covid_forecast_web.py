@@ -12,7 +12,6 @@ DAYS_BACK = 60
 
 
 def show():
-
     indicators = {"Cases": 'cases', "Cumulative Cases for 14 days": 'cases_14d', "Deaths": 'deaths'}
 
     add_title = ""
@@ -62,7 +61,7 @@ st.set_page_config(page_title="COVID-19 Forcast", layout="wide")
 
 start = timer()
 covid_world_orig, source_date = get_covid_world_data(force_use='file')
-print(f"loaded data from file as of {source_date} in {round(timer() - start,2)} seconds")
+print(f"loaded data from file as of {source_date} in {round(timer() - start, 2)} seconds")
 
 covid_world = transform_covid_data(covid_world_orig)
 
@@ -121,7 +120,6 @@ else:
         if st.sidebar.checkbox(function, True):
             selected_functions.append(function)
 
-
 show()
 
 start = timer()
@@ -132,6 +130,3 @@ if new_source_date > source_date:
     start = timer()
     write_covid_file(covid_world_orig, new_source_date)
     print(f"written data as of {new_source_date} in {round(timer() - start, 2)} seconds")
-    show()
-
-
