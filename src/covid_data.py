@@ -1,4 +1,5 @@
 from urllib.request import urlopen, Request
+from urllib.error import URLError
 from dateutil.parser import parse as parsedate
 import datetime as dt
 import os
@@ -10,10 +11,21 @@ url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
 
 
 def get_covid_http_handle():
-    request = Request(url)
-    response = urlopen(request)
-    url_datetime = parsedate(response.headers['Date']).astimezone()
-    return response, url_datetime
+    headers = {'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36"}
+    try:
+        request = Request(url, headers=headers)
+        response = urlopen(request)
+        url_datetime = parsedate(response.headers['Date']).astimezone()
+        return response, url_datetime
+    except URLError as e:
+        if hasattr(e, 'reason'):
+            print("request {} failed. reason: {}".format(url, e.reason))
+        if hasattr(e, 'id'):
+            print("request {} failed. id: {}".format(url, e.code))
+        return None
+    except Exception as e:
+        print("request {} failed. reason: {}".format(url, e))
+        return None
 
 
 def get_covid_file_handle():
