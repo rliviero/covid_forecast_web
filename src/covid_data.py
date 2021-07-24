@@ -6,8 +6,8 @@ import os
 import pandas as pd
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = base_dir + "/owid-covid.world.csv"
-url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
+file_path = base_dir + "/owid-covid-data.csv"
+url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv"
 
 
 def get_covid_http_handle():
@@ -96,6 +96,8 @@ def transform_covid_data(covid_world):
 if __name__ == "__main__":
     import datetime as dt
     from timeit import default_timer as timer
+
+    covid_world, source_date = get_covid_world_data(force_use='http')
 
     # make sure it get the newest data trough a request
     os.utime(file_path, (dt.datetime.now().timestamp(), dt.datetime(2019, 1, 1, 12, 0, 0).timestamp()))
